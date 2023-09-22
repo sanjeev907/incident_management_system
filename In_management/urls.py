@@ -25,6 +25,7 @@ urlpatterns = [
     path('login/',UserLoginView.as_view()),
     path('CreateIncidentApi/',CreateIncidentApi.as_view()),
     path('GetAllIncident/',GetAllIncident.as_view()),
+    path('GetOneIncident/<id>/',GetOneIncident.as_view()),
     path('UpdateIncident/<id>/',UpdateIncident.as_view()),
     path('api-token-auth/', views.obtain_auth_token)
 ]

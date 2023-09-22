@@ -28,13 +28,20 @@ def api_response(code,data,message,errors):
     res['errors'] = errors
     return res
 
-# def check_auth(request):
-#     try:
-#         header_data = request.headers["Authorization"]
-#         user_id = 0
-#         return True, user_id
-#     except Exception as e:
-#         print(e)
+def check_auth(request):
+    try:
+        header_data = request.headers["Authorization"]
+        if 'Token' in header_data:
+            encoded_token = header_data.split(' ')[1]
+        else:
+            raise ValueError("Token not present in Authorization header")
+        token = Token.objects.get(key = encoded_token)
+        user = token.user
+        print(type(user.id))
+        return True, user.id
+    except Exception as e:
+        print(e)
+        return False, None
 
 # Api starts from here 
 
@@ -44,7 +51,7 @@ class UserGetView(generics.GenericAPIView):
         data = User.objects.all()
         instance = Userserializers(data,many=True)
         return Response(instance.data)
-
+    
 
 class UserRegisterView(generics.GenericAPIView):
     permission_classes = []
@@ -60,7 +67,6 @@ class UserRegisterView(generics.GenericAPIView):
             print(e)
             return JsonResponse(api_response(1,[],"Error",str(e)))
         
-
 
 class UserLoginView(generics.GenericAPIView):
     permission_classes = []
@@ -85,36 +91,6 @@ class UserLoginView(generics.GenericAPIView):
             return Response("Error occurred during login")
 
 
-
-# def decode_token(token_key):
-#     try:
-#         token = Token.objects.get(key=token_key)
-#         user = token.user
-#         return user.id
-#     except Token.DoesNotExist:
-#         return None
-
-
-def check_auth(request):
-    try:
-        header_data = request.headers["Authorization"]
-        if 'Token' in header_data:
-            encoded_token = header_data.split(' ')[1]
-        else:
-            raise ValueError("Token not present in Authorization header")
-        token = Token.objects.get(key = encoded_token)
-        user = token.user
-        print(type(user.id))
-        return True, user.id
-    except Exception as e:
-        print(e)
-        return False, None
-
-
-
-
-
-
 class CreateIncidentApi(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
@@ -135,7 +111,6 @@ class CreateIncidentApi(generics.GenericAPIView):
             return Response({"message":"error"})
         
 
-
 class GetAllIncident(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     def get(self,request,*args, **kwargs):
@@ -151,7 +126,22 @@ class GetAllIncident(generics.GenericAPIView):
             print(e)
             return JsonResponse(api_response(1,[],"Error",str(e)))
 
-  
+
+class GetOneIncident(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request, id,*args, **kwargs):
+        try:
+            auth_status, user_id = check_auth(request)
+            if auth_status:
+                instance = Incident.objects.get(id = id)
+                validation = IncidentSerializers(instance)
+                return Response(validation.data)
+            else:
+                return Response({'message':'The incident is not valid'})
+        except Exception as e:
+            print(e)
+            return JsonResponse(api_response(1,[],"Error",str(e)))
+
 
 class UpdateIncident(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
